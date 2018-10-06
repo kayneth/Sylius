@@ -40,14 +40,32 @@ final class ORMTranslatableListener implements EventSubscriber
 
     /**
      * @param RegistryInterface $resourceMetadataRegistry
-     * @param ContainerInterface $container
+     * @param $translatableEntityLocaleAssigner
      */
     public function __construct(
         RegistryInterface $resourceMetadataRegistry,
-        ContainerInterface $container
+        $translatableEntityLocaleAssigner
     ) {
         $this->resourceMetadataRegistry = $resourceMetadataRegistry;
-        $this->translatableEntityLocaleAssigner = $container->get('sylius.translatable_entity_locale_assigner');
+
+        if ($translatableEntityLocaleAssigner instanceof ContainerInterface) {
+            @trigger_error(
+                sprintf('Passing an instance of "%s" is deprecated since 1.0. Use %s instead.',
+                ContainerInterface::class, TranslatableEntityLocaleAssignerInterface::class), E_USER_DEPRECATED
+            );
+            $translatableEntityLocaleAssigner = $translatableEntityLocaleAssigner->get('sylius.translatable_entity_locale_assigner');
+        }
+
+        if(!$translatableEntityLocaleAssigner instanceof TranslatableEntityLocaleAssignerInterface)
+        {
+            throw new \InvalidArgumentException(sprintf(
+                'TranslatableEntityLocaleAssigner "%s" was expected to return an instance of "%s" , "%s" found',
+                TranslatableEntityLocaleAssignerInterface::class,
+                is_object($translatableEntityLocaleAssigner) ? get_class($translatableEntityLocaleAssigner) : gettype($translatableEntityLocaleAssigner)
+            ));
+        }
+
+        $this->translatableEntityLocaleAssigner = $translatableEntityLocaleAssigner;
     }
 
     /**
